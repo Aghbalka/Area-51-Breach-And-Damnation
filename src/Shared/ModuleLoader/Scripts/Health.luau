@@ -1,4 +1,7 @@
+local HealthModule = {}
 
-local Module = {}
+function HealthModule.Init()
+	local Loader = require(game.ReplicatedStorage.ModuleLoader.Loader)
+end
 
-return Module
+return HealthModule

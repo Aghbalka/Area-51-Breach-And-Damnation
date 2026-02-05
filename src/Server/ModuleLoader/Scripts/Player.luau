@@ -10,6 +10,10 @@ function PlayerServer.Start()
 	Players.PlayerAdded:Connect(function(player)
 		PlayerData.CreateData(player)
 	end)
+
+	Players.PlayerRemoving:Connect(function(player)
+		PlayerData.DeleteData(player)
+	end)
 end
 
 return PlayerServer

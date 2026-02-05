@@ -1,3 +1,4 @@
+local ServerScriptService = game:GetService("ServerScriptService")
 local PlayerModule = {}
 
 function PlayerModule.Init()
@@ -179,7 +180,7 @@ local function GetOrCreatePath(root, pathParts)
 
 	for i = 1, #pathParts - 1 do
 		local name = pathParts[i]
-		local folder = current:FindFirstChild(name)
+		local folder = current:WaitForChild(name)
 
 		if not folder then
 			folder = Instance.new("Folder")
@@ -210,7 +211,7 @@ local function SyncTree(sourceRoot, targetRoot)
 		local pathParts = GetRelativePath(valueObject, sourceRoot)
 		local parentFolder, valueName = GetOrCreatePath(targetRoot, pathParts)
 
-		local targetValue = parentFolder:FindFirstChild(valueName)
+		local targetValue = parentFolder:WaitForChild(valueName)
 		if not targetValue then
 			targetValue = valueObject:Clone()
 			targetValue.Parent = parentFolder
@@ -227,7 +228,7 @@ local function SyncTree(sourceRoot, targetRoot)
 		if folder ~= sourceRoot then
 			local pathParts = GetRelativePath(folder, sourceRoot)
 			local parentFolder, folderName = GetOrCreatePath(targetRoot, pathParts)
-			if not parentFolder:FindFirstChild(folderName) then
+			if not parentFolder:WaitForChild(folderName) then
 				local newFolder = Instance.new("Folder")
 				newFolder.Name = folderName
 				newFolder.Parent = parentFolder
@@ -256,6 +257,7 @@ local function SyncTree(sourceRoot, targetRoot)
 end
 
 function PlayerModule.CreateData(Plr)
+local Player = require(ServerScriptService.ModuleLoader.Scripts.Player)
 	local Loader = require(game.ReplicatedStorage.ModuleLoader.Loader)
 
 	local PlayerData = Instance.new("Folder")
@@ -269,6 +271,97 @@ function PlayerModule.CreateData(Plr)
 	MakeFolder(PlayerModule.Data, ReadOnlyData)
 
 	SyncTree(PlayerData, ReadOnlyData)
+end
+
+function PlayerModule.DeleteData(Plr)
+	local Loader = require(game.ReplicatedStorage.ModuleLoader.Loader)
+
+	local PlayerData = Loader.Services.ServerStorage.PlayerData:FindFirstChild(Plr.UserId)
+	if PlayerData then
+		PlayerData:Destroy()
+	end
+end
+
+function PlayerModule.GetData(Plr)
+	local Loader = require(game.ReplicatedStorage.ModuleLoader.Loader)
+
+	local PlayerData = Loader.Services.ServerStorage.PlayerData:WaitForChild(Plr.UserId)
+	return PlayerData
+end
+
+function PlayerModule.GetReadOnlyData(Plr)
+	local ReadOnlyData = Plr:WaitForChild("ReadOnlyData")
+	return ReadOnlyData
+end
+
+function PlayerModule.GetValue(Plr, Path)
+	local DataFolder = PlayerModule.GetData(Plr)
+	if not DataFolder then return nil end
+
+	local Current = DataFolder
+	for Part in string.gmatch(Path, "[^%.]+") do
+		Current = Current:WaitForChild(Part)
+		if not Current then
+			return nil
+		end
+	end
+
+	return Current
+end
+
+function PlayerModule.SetValue(Plr, Path, NewValue)
+	local ValueObject = PlayerModule.GetValue(Plr, Path)
+	if ValueObject then
+		ValueObject.Value = NewValue
+	end
+end
+
+function PlayerModule.CreateValueObject(Plr, Path, ValueType, InitialValue)
+	local DataFolder = PlayerModule.GetData(Plr)
+	if not DataFolder then return nil end
+
+	local Current = DataFolder
+	local Parts = {}
+	for Part in string.gmatch(Path, "[^%.]+") do
+		table.insert(Parts, Part)
+	end
+
+	for i = 1, #Parts - 1 do
+		local Part = Parts[i]
+		local NextFolder = Current:WaitForChild(Part)
+		if not NextFolder then
+			NextFolder = Instance.new("Folder")
+			NextFolder.Name = Part
+			NextFolder.Parent = Current
+		end
+		Current = NextFolder
+	end
+
+	local ValueName = Parts[#Parts]
+	local ValueObject = Current:WaitForChild(ValueName)
+	if not ValueObject then
+		ValueObject = Instance.new(ValueType)
+		ValueObject.Name = ValueName
+		ValueObject.Value = InitialValue
+		ValueObject.Parent = Current
+	end
+
+	return ValueObject
+end
+
+function PlayerModule.GetReadOnlyValue(Plr, Path)
+	local ReadOnlyData = PlayerModule.GetReadOnlyData(Plr)
+	if not ReadOnlyData then return nil end
+
+	local Current = ReadOnlyData
+	for Part in string.gmatch(Path, "[^%.]+") do
+		Current = Current:WaitForChild(Part)
+		if not Current then
+			return nil
+		end
+	end
+
+	return Current
 end
 
 return PlayerModule
