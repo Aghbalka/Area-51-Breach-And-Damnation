@@ -34,16 +34,16 @@ function PlayerModule.Init()
 				"Pink",
 			},
 			Weapons = {
-				"M1911",	
+				"M1911",
 			},
 			Items = {
 				"Grenade",
-				"Medkit"
+				"Medkit",
 			},
 			Killers = {
 				["Zombie"] = {
 					"Default",
-				}
+				},
 			},
 			KillerPacks = {
 				"Default",
@@ -88,7 +88,7 @@ function PlayerModule.Init()
 				Weapon = "V",
 				Item = "B",
 				Interact = "F",
-			},	
+			},
 		},
 		GameStats = {
 			TimePlayed = 0,
@@ -118,6 +118,9 @@ function PlayerModule.Init()
 			Dead = false,
 			InHand = "Nothing",
 			Invincible = false,
+			CanSprint = true,
+			StaminaDraining = true,
+			StaminaRegen = true,
 			DamagePercent = 100,
 			MaxHealth = 100,
 			Health = 100,
@@ -130,20 +133,20 @@ function PlayerModule.Init()
 		},
 		StatusEffects = {},
 		Abilities = {
-			SkillM1 = {["Name"] = "", ["Cd"] = 0, ["Status"] = 1},
-			Skill1 = {["Name"] = "", ["Cd"] = 0, ["Status"] = 1},
-			Skill2 = {["Name"] = "", ["Cd"] = 0, ["Status"] = 1},
-			Skill3 = {["Name"] = "", ["Cd"] = 0, ["Status"] = 1},
-			Skill4 = {["Name"] = "", ["Cd"] = 0, ["Status"] = 1},
-			Weapon = {["Name"] = "", ["Ammo"] = 0, ["RemainingAmmo"] = 0 ,Active = true},
-			Item = {["Name"] = "", ["Stock"] = 4, ["Cd"] = 0, ["Status"] = 1},
-			Passive1 = {["Name"] = "", ["Status"] = 1},
-			Passive2 = {["Name"] = "", ["Status"] = 1},
+			SkillM1 = { ["Name"] = "", ["Cd"] = 0, ["Status"] = 1 },
+			Skill1 = { ["Name"] = "", ["Cd"] = 0, ["Status"] = 1 },
+			Skill2 = { ["Name"] = "", ["Cd"] = 0, ["Status"] = 1 },
+			Skill3 = { ["Name"] = "", ["Cd"] = 0, ["Status"] = 1 },
+			Skill4 = { ["Name"] = "", ["Cd"] = 0, ["Status"] = 1 },
+			Weapon = { ["Name"] = "", ["Ammo"] = 0, ["RemainingAmmo"] = 0, Active = true },
+			Item = { ["Name"] = "", ["Stock"] = 4, ["Cd"] = 0, ["Status"] = 1 },
+			Passive1 = { ["Name"] = "", ["Status"] = 1 },
+			Passive2 = { ["Name"] = "", ["Status"] = 1 },
 		},
 	}
 end
 
-function MakeFolder(Folder ,Parent)
+function MakeFolder(Folder, Parent)
 	for Name, Value in Folder do
 		if typeof(Value) == "table" then
 			local Folder = Instance.new("Folder")
@@ -206,7 +209,6 @@ local function GetRelativePath(instance, root)
 end
 
 local function SyncTree(sourceRoot, targetRoot)
-
 	local function MirrorValue(valueObject)
 		local pathParts = GetRelativePath(valueObject, sourceRoot)
 		local parentFolder, valueName = GetOrCreatePath(targetRoot, pathParts)
@@ -245,7 +247,6 @@ local function SyncTree(sourceRoot, targetRoot)
 
 		folder.ChildAdded:Connect(function(child)
 			if child:IsA("Folder") then
-				
 				MirrorFolder(child)
 			elseif child:IsA("ValueBase") then
 				MirrorValue(child)
@@ -257,7 +258,7 @@ local function SyncTree(sourceRoot, targetRoot)
 end
 
 function PlayerModule.CreateData(Plr)
-local Player = require(ServerScriptService.ModuleLoader.Scripts.Player)
+	local Player = require(ServerScriptService.ModuleLoader.Scripts.Player)
 	local Loader = require(game.ReplicatedStorage.ModuleLoader.Loader)
 
 	local PlayerData = Instance.new("Folder")
@@ -296,7 +297,9 @@ end
 
 function PlayerModule.GetValue(Plr, Path)
 	local DataFolder = PlayerModule.GetData(Plr)
-	if not DataFolder then return nil end
+	if not DataFolder then
+		return nil
+	end
 
 	local Current = DataFolder
 	for Part in string.gmatch(Path, "[^%.]+") do
@@ -318,7 +321,9 @@ end
 
 function PlayerModule.CreateValueObject(Plr, Path, ValueType, InitialValue)
 	local DataFolder = PlayerModule.GetData(Plr)
-	if not DataFolder then return nil end
+	if not DataFolder then
+		return nil
+	end
 
 	local Current = DataFolder
 	local Parts = {}
@@ -351,7 +356,9 @@ end
 
 function PlayerModule.GetReadOnlyValue(Plr, Path)
 	local ReadOnlyData = PlayerModule.GetReadOnlyData(Plr)
-	if not ReadOnlyData then return nil end
+	if not ReadOnlyData then
+		return nil
+	end
 
 	local Current = ReadOnlyData
 	for Part in string.gmatch(Path, "[^%.]+") do

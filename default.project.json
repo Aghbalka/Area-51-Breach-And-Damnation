@@ -5,7 +5,7 @@
 
     "ReplicatedStorage": {
       "ModuleLoader": {
-        "$path": "SourceCode/Shared/ModuleLoader"
+        "$path": "src/Shared/ModuleLoader"
       },
       "Packages": {
         "$path": "Packages"
@@ -17,13 +17,13 @@
 
     "ServerScriptService": {
       "ModuleLoader": {
-        "$path": "SourceCode/Server/ModuleLoader"
+        "$path": "src/Server/ModuleLoader"
       }
     },
 
     "ReplicatedFirst": {
       "ModuleLoader": {
-        "$path": "SourceCode/Client/ModuleLoader"
+        "$path": "src/Client/ModuleLoader"
       }
     }
   }
