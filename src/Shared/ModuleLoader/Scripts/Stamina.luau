@@ -1,14 +1,19 @@
 local StaminaModule = {}
 
-function StaminaModule.Init()
-	local Loader = require(game.ReplicatedStorage.ModuleLoader.Loader)
-end
-
 function StaminaModule.SetSprintState(Plr, IsSprinting)
 	local PlayerModule = require(game.ReplicatedStorage.ModuleLoader.Scripts.Player)
-	local Sprinting = PlayerModule.GetValue(Plr, "Stats.IsSprinting")
+	local Sprinting = PlayerModule.GetValue(Plr, "Stats.Sprinting")
 	if Sprinting then
 		Sprinting.Value = IsSprinting
+	end
+
+	local Walkspeed = PlayerModule.GetValue(Plr, "Stats.Speed")
+	local SprintSpeed = PlayerModule.GetValue(Plr, "Stats.SprintSpeed")
+
+	if IsSprinting then
+		Plr.Character.Humanoid.WalkSpeed = SprintSpeed.Value
+	else
+		Plr.Character.Humanoid.WalkSpeed = Walkspeed.Value
 	end
 end
 

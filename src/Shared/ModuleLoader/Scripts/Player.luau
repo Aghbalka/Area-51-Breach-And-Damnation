@@ -130,6 +130,10 @@ function PlayerModule.Init()
 			SpeedMultiplier = 1,
 			Speed = 8,
 			SprintSpeed = 26,
+			StaminaRegenPerSec = 15,
+			StaminaDrainPerSec = 12,
+			StaminaDelay = 1.5,
+			ExhaustionDelay = 3,
 		},
 		StatusEffects = {},
 		Abilities = {

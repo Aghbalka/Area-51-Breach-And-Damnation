@@ -1,8 +1,7 @@
 local RoundModule = {}
 
-function RoundModule.Init()
-	local Loader = require(game.ReplicatedStorage.ModuleLoader.Loader)
-end
+RoundModule.Maps = {}
+RoundModule.GameModes = {}
 
 function RoundModule.ChangeRoundState(StateName)
 	local RoundData = game.ServerStorage.RoundData
@@ -65,5 +64,9 @@ function RoundModule.RollGameMode() end
 function RoundModule.ChoseKiller() end
 
 function RoundModule.SetNextKiller(PlrName) end
+
+function RoundModule.SetNextMap(MapName) end
+
+function RoundModule.SetNextGameMode(GameModeName) end
 
 return RoundModule

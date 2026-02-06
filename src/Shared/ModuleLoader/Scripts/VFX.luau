@@ -1,4 +1,13 @@
+local VFXModule = {}
 
-local Module = {}
+VFXModule.VFX = {
+	Screenshake = function(Plr, Intensity, Duration) end,
+}
 
-return Module
+function VFXModule.PlayVFX(Plr, VFXName, Intensity, Duration)
+	if VFXModule.VFX[VFXName] then
+		VFXModule.VFX[VFXName](Plr, Intensity, Duration)
+	end
+end
+
+return VFXModule

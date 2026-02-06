@@ -5,7 +5,7 @@ function HealthServer.Start()
 	local Players = Loader.Services.Players
 	local PlayerModule = require(game.ReplicatedStorage.ModuleLoader.Scripts.Player)
 
-	function CheckForHealth(Health, Plr)
+	local function CheckForHealth(Health, Plr)
 		if Health <= 0 then
 			print("Player is dead!")
 		elseif Health > 0 and Health < 25 then
