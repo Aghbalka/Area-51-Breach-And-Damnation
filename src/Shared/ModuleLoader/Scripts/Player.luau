@@ -5,11 +5,11 @@ function PlayerModule.Init()
 	PlayerModule.Data = {
 		Inventory = {
 			EquippedSurvivor = "Scout",
-			EquippedVariant = "Default",
+			EquippedSkin = "Default",
 			EquippedWeapon = "Default",
 			EquippedItem = "Grenade",
 			EquippedKiller = "Zombie",
-			EquippedKillerVariant = "Default",
+			EquippedKillerSkin = "Default",
 			EquippedEmotes = {
 				Emote1 = "Hello",
 				Emote2 = "Yes",
@@ -25,13 +25,10 @@ function PlayerModule.Init()
 			Survivors = {
 				["Scout"] = {
 					"Default",
-					"Gray",
-					"Pink",
 				},
 			},
 			Packs = {
 				"Default",
-				"Pink",
 			},
 			Weapons = {
 				"M1911",
@@ -44,9 +41,6 @@ function PlayerModule.Init()
 				["Zombie"] = {
 					"Default",
 				},
-			},
-			KillerPacks = {
-				"Default",
 			},
 			Emotes = {
 				"Hello",
@@ -134,16 +128,18 @@ function PlayerModule.Init()
 			StaminaDrainPerSec = 12,
 			StaminaDelay = 1.5,
 			ExhaustionDelay = 3,
+			AbilityCooldowns = true,
+			AbilityActivationRequired = true,
 		},
 		StatusEffects = {},
 		Abilities = {
-			SkillM1 = { ["Name"] = "", ["Cd"] = 0, ["Status"] = 1 },
-			Skill1 = { ["Name"] = "", ["Cd"] = 0, ["Status"] = 1 },
+			SkillM1 = { ["Name"] = "PlaceHolder", ["Cd"] = 0, ["Status"] = 1 },
+			Skill1 = { ["Name"] = "PlaceHolder", ["Cd"] = 0, ["Status"] = 1 },
 			Skill2 = { ["Name"] = "", ["Cd"] = 0, ["Status"] = 1 },
 			Skill3 = { ["Name"] = "", ["Cd"] = 0, ["Status"] = 1 },
 			Skill4 = { ["Name"] = "", ["Cd"] = 0, ["Status"] = 1 },
-			Weapon = { ["Name"] = "", ["Ammo"] = 0, ["RemainingAmmo"] = 0, Active = true },
-			Item = { ["Name"] = "", ["Stock"] = 4, ["Cd"] = 0, ["Status"] = 1 },
+			Weapon = { ["Name"] = "PlaceHolder", ["Ammo"] = 0, ["RemainingAmmo"] = 0, Active = true },
+			Item = { ["Name"] = "PlaceHolder", ["Stock"] = 4, ["Cd"] = 0, ["Status"] = 1 },
 			Passive1 = { ["Name"] = "", ["Status"] = 1 },
 			Passive2 = { ["Name"] = "", ["Status"] = 1 },
 		},
@@ -217,7 +213,7 @@ local function SyncTree(sourceRoot, targetRoot)
 		local pathParts = GetRelativePath(valueObject, sourceRoot)
 		local parentFolder, valueName = GetOrCreatePath(targetRoot, pathParts)
 
-		local targetValue = parentFolder:WaitForChild(valueName)
+		local targetValue = parentFolder:FindFirstChild(valueName)
 		if not targetValue then
 			targetValue = valueObject:Clone()
 			targetValue.Parent = parentFolder
@@ -226,7 +222,9 @@ local function SyncTree(sourceRoot, targetRoot)
 		targetValue.Value = valueObject.Value
 
 		valueObject.Changed:Connect(function()
-			targetValue.Value = valueObject.Value
+			if targetValue then
+				targetValue.Value = valueObject.Value
+			end
 		end)
 	end
 
@@ -234,18 +232,12 @@ local function SyncTree(sourceRoot, targetRoot)
 		if folder ~= sourceRoot then
 			local pathParts = GetRelativePath(folder, sourceRoot)
 			local parentFolder, folderName = GetOrCreatePath(targetRoot, pathParts)
-			if not parentFolder:WaitForChild(folderName) then
-				local newFolder = Instance.new("Folder")
-				newFolder.Name = folderName
-				newFolder.Parent = parentFolder
-			end
-		end
 
-		for _, child in ipairs(folder:GetChildren()) do
-			if child:IsA("Folder") then
-				MirrorFolder(child)
-			elseif child:IsA("ValueBase") then
-				MirrorValue(child)
+			local existing = parentFolder:FindFirstChild(folderName)
+			if not existing then
+				existing = Instance.new("Folder")
+				existing.Name = folderName
+				existing.Parent = parentFolder
 			end
 		end
 
@@ -256,6 +248,13 @@ local function SyncTree(sourceRoot, targetRoot)
 				MirrorValue(child)
 			end
 		end)
+		for _, child in ipairs(folder:GetChildren()) do
+			if child:IsA("Folder") then
+				MirrorFolder(child)
+			elseif child:IsA("ValueBase") then
+				MirrorValue(child)
+			end
+		end
 	end
 
 	MirrorFolder(sourceRoot)

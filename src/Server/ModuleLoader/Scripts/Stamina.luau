@@ -27,7 +27,7 @@ function StaminaServer.Start()
 			return
 		end
 
-		local walkSpeed = PlayerModule.GetValue(plr, "Stats.WalkSpeed")
+		local walkSpeed = PlayerModule.GetValue(plr, "Stats.Speed")
 		local sprintSpeed = PlayerModule.GetValue(plr, "Stats.SprintSpeed")
 		local isSprinting = PlayerModule.GetValue(plr, "Stats.Sprinting")
 		local speedMultiplier = PlayerModule.GetValue(plr, "Stats.SpeedMultiplier")
