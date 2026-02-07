@@ -2,6 +2,8 @@ local EncodingService = game:GetService("EncodingService")
 local ServerStorage = game:GetService("ServerStorage")
 local AbilitiesModule = {}
 
+AbilitiesModule.PlayerTracks = {}
+
 AbilitiesModule.Abilities = {
 	PlaceHolder = {
 		Name = "PlaceHolder",
@@ -37,9 +39,9 @@ AbilitiesModule.Items = {
 			print("Used Item: " .. Plr.Name .. " State: " .. State)
 		end,
 		ModelName = "PlaceHolder",
-		EquipAnim = 4444,
-		IdleAnim = 4444,
-		UnequipAnim = 4444,
+		EquipAnim = 124594366241728,
+		IdleAnim = 76119128339409,
+		UnequipAnim = 119949877189803,
 	},
 }
 
@@ -50,9 +52,9 @@ AbilitiesModule.Weapons = {
 		Description = "PlaceHolder",
 		Quote = "PlaceHolder",
 		ModelName = "PlaceHolder",
-		EquipAnim = 4444,
-		IdleAnim = 4444,
-		UnequipAnim = 4444,
+		EquipAnim = 117874987820333,
+		IdleAnim = 88325229122129,
+		UnequipAnim = 129430809420445,
 	},
 }
 
@@ -87,6 +89,10 @@ end
 
 function AbilitiesModule.EquipItem(Plr)
 	local PlayerFolder = ServerStorage.PlayerData:FindFirstChild(Plr.UserId)
+	if not PlayerFolder then
+		return
+	end
+
 	local Abilities = PlayerFolder:FindFirstChild("Abilities")
 	local Item = Abilities:FindFirstChild("Item")
 	local ItemName = Item:FindFirstChild("Name").Value
@@ -96,6 +102,7 @@ function AbilitiesModule.EquipItem(Plr)
 	local InHand = PlayerFolder.Stats.InHand
 
 	if InHand.Value == "Item" then
+		print("Already holding an item!")
 		return
 	end
 
@@ -110,33 +117,106 @@ function AbilitiesModule.EquipItem(Plr)
 	end
 
 	local FunctionalItem = AbilitiesModule.Items[ItemName]
+	if not FunctionalItem then
+		print("Item not found in module!")
+		return
+	end
+
 	local ItemModel = game.ReplicatedStorage.Assets.Items:FindFirstChild(FunctionalItem.ModelName)
+	if not ItemModel then
+		print("Item model missing: " .. FunctionalItem.ModelName)
+		return
+	end
+
 	local ClonedItem = ItemModel:Clone()
 	ClonedItem.Parent = Plr.Character
 	ClonedItem.Name = "EquippedItem"
+
+	local RightArm = Plr.Character:FindFirstChild("Right Arm") or Plr.Character:FindFirstChild("RightHand")
+	if not RightArm then
+		print("Right arm not found!")
+		return
+	end
+
 	local Motor6D = Instance.new("Motor6D")
 	Motor6D.Name = "ItemWeld"
-	Motor6D.Part0 = Plr.Character:FindFirstChild("Right Arm")
+	Motor6D.Part0 = RightArm
 	Motor6D.Part1 = ClonedItem
 	Motor6D.Parent = ClonedItem
 
 	InHand.Value = "Item"
-	print("Equipped Item!")
+
+	local Humanoid = Plr.Character:FindFirstChildOfClass("Humanoid")
+
+	local EquipAnim = Instance.new("Animation")
+	EquipAnim.AnimationId = "rbxassetid://" .. FunctionalItem.EquipAnim
+	local IdleAnim = Instance.new("Animation")
+	IdleAnim.AnimationId = "rbxassetid://" .. FunctionalItem.IdleAnim
+
+	local EquipTrack = Humanoid:LoadAnimation(EquipAnim)
+	local IdleTrack = Humanoid:LoadAnimation(IdleAnim)
+	EquipTrack.Priority = Enum.AnimationPriority.Action
+	IdleTrack.Priority = Enum.AnimationPriority.Action2
+
+	AbilitiesModule.PlayerTracks[Plr.UserId] = {
+		IdleTrack = IdleTrack,
+		EquipTrack = EquipTrack,
+	}
+
+	for _, track in pairs(Humanoid:GetPlayingAnimationTracks()) do
+		track:Stop()
+	end
+
+	EquipTrack:Play()
+	EquipTrack.Stopped:Connect(function()
+		IdleTrack:Play()
+	end)
 end
 
 function AbilitiesModule.UnequipItem(Plr)
-	local InHand = game.ServerStorage.PlayerData:FindFirstChild(Plr.UserId).Stats.InHand
-	if InHand.Value ~= "Item" then
+	local PlayerFolder = ServerStorage.PlayerData:FindFirstChild(Plr.UserId)
+	if not PlayerFolder then
 		return
 	end
 
+	local Abilities = PlayerFolder:FindFirstChild("Abilities")
+	local Item = Abilities:FindFirstChild("Item")
+	local ItemName = Item:FindFirstChild("Name").Value
+
+	local InHand = PlayerFolder.Stats.InHand
+	if InHand.Value ~= "Item" then
+		print("Player not holding an item!")
+		return
+	end
+
+	InHand.Value = "Nothing"
+
+	local tracks = AbilitiesModule.PlayerTracks[Plr.UserId]
+
+	local FunctionalItem = AbilitiesModule.Items[ItemName]
+	local Humanoid = Plr.Character:FindFirstChildOfClass("Humanoid")
+
+	if tracks and tracks.IdleTrack then
+		tracks.IdleTrack:Stop()
+	end
+
+	local UnequipAnim = Instance.new("Animation")
+	UnequipAnim.AnimationId = "rbxassetid://" .. FunctionalItem.UnequipAnim
+	local UnequipTrack = Humanoid:LoadAnimation(UnequipAnim)
+	UnequipTrack.Priority = Enum.AnimationPriority.Action
+
+	for _, track in pairs(Humanoid:GetPlayingAnimationTracks()) do
+		track:Stop()
+	end
+
+	UnequipTrack:Play()
+	UnequipTrack.Stopped:Wait()
+
+	AbilitiesModule.PlayerTracks[Plr.UserId] = nil
 	local EquippedItem = Plr.Character:FindFirstChild("EquippedItem")
 	if EquippedItem then
 		EquippedItem:Destroy()
 	end
-
-	InHand.Value = "Nothing"
-	print("Unequipped Item!")
 end
 
 function AbilitiesModule.UseItem(Plr)
@@ -179,10 +259,46 @@ function AbilitiesModule.EquipWeapon(Plr)
 	Motor6D.Parent = ClonedItem
 
 	InHand.Value = "Weapon"
+
+	local Humanoid = Plr.Character:FindFirstChildOfClass("Humanoid")
+	if not Humanoid then
+		print("Humanoid not found!")
+		return
+	end
+
+	local EquipAnim = Instance.new("Animation")
+	EquipAnim.AnimationId = "rbxassetid://" .. FunctionalWeapon.EquipAnim
+	local IdleAnim = Instance.new("Animation")
+	IdleAnim.AnimationId = "rbxassetid://" .. FunctionalWeapon.IdleAnim
+
+	local EquipTrack = Humanoid:LoadAnimation(EquipAnim)
+	local IdleTrack = Humanoid:LoadAnimation(IdleAnim)
+	EquipTrack.Priority = Enum.AnimationPriority.Action
+	IdleTrack.Priority = Enum.AnimationPriority.Action2
+
+	AbilitiesModule.PlayerTracks[Plr.UserId] = {
+		IdleTrack = IdleTrack,
+		EquipTrack = EquipTrack,
+	}
+
+	for _, track in pairs(Humanoid:GetPlayingAnimationTracks()) do
+		track:Stop()
+	end
+
+	EquipTrack:Play()
+	EquipTrack.Stopped:Connect(function()
+		IdleTrack:Play()
+	end)
+
 	print("Equipped Weapon!")
 end
 
 function AbilitiesModule.UnequipWeapon(Plr)
+	local PlayerFolder = ServerStorage.PlayerData:FindFirstChild(Plr.UserId)
+	local Abilities = PlayerFolder:FindFirstChild("Abilities")
+	local Weapon = Abilities:FindFirstChild("Weapon")
+	local WeaponName = Weapon:FindFirstChild("Name").Value
+
 	local InHand = game.ServerStorage.PlayerData:FindFirstChild(Plr.UserId).Stats.InHand
 	if InHand.Value ~= "Weapon" then
 		return
@@ -195,6 +311,33 @@ function AbilitiesModule.UnequipWeapon(Plr)
 
 	InHand.Value = "Nothing"
 	print("Unequipped Weapon!")
+
+	local tracks = AbilitiesModule.PlayerTracks[Plr.UserId]
+
+	local FunctionalItem = AbilitiesModule.Items[WeaponName]
+	local Humanoid = Plr.Character:FindFirstChildOfClass("Humanoid")
+
+	if tracks and tracks.IdleTrack then
+		tracks.IdleTrack:Stop()
+	end
+
+	local UnequipAnim = Instance.new("Animation")
+	UnequipAnim.AnimationId = "rbxassetid://" .. FunctionalItem.UnequipAnim
+	local UnequipTrack = Humanoid:LoadAnimation(UnequipAnim)
+	UnequipTrack.Priority = Enum.AnimationPriority.Action
+
+	for _, track in pairs(Humanoid:GetPlayingAnimationTracks()) do
+		track:Stop()
+	end
+
+	UnequipTrack:Play()
+	UnequipTrack.Stopped:Wait()
+
+	AbilitiesModule.PlayerTracks[Plr.UserId] = nil
+	local EquippedItem = Plr.Character:FindFirstChild("EquippedItem")
+	if EquippedItem then
+		EquippedItem:Destroy()
+	end
 end
 
 function AbilitiesModule.SetCooldown(Plr, Keybind, CooldownTime)
